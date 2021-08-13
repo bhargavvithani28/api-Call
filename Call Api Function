@@ -1,0 +1,52 @@
+private void login(String user_name, String password) {
+
+        final Dialog startdialog = new Dialog(context);
+        startdialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+
+        Call<Login> call = RestClient.post().login(user_name, password);
+        call.enqueue(new Callback<Login>() {
+            @Override
+            public void onResponse(Call<Login> call, Response<Login> response) {
+
+                Login datas = response.body();
+
+                if (datas.getObjeto().equals("null")) {
+                    Toast.makeText(context, datas.getError(), Toast.LENGTH_SHORT).show();
+                    startdialog.dismiss();
+                    return;
+                }
+
+                Gson gson = new Gson();
+                DataLogin dataLogin = gson.fromJson(datas.getObjeto(), DataLogin.class);
+
+                Utils.saveData(context, "Personal", String.valueOf(dataLogin.getSecuenciaPersonal()));
+
+                dataCall();
+                secondApiCall();
+
+                planificationApiCall();
+
+                shareprefrence.sharedPreferences.edit().putBoolean("id", true).apply();
+
+                startdialog.dismiss();
+
+            }
+
+            @Override
+            public void onFailure(Call<Login> call, Throwable t) {
+                startdialog.dismiss();
+                Toast.makeText(context, "Something Went Wrong", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        startdialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        startdialog.setContentView(R.layout.custom_progressdialog);
+        startdialog.getWindow().setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        startdialog.setCancelable(false);
+        startdialog.setCanceledOnTouchOutside(false);
+
+        AVLoadingIndicatorView avi = (AVLoadingIndicatorView) startdialog.findViewById(R.id.avi);
+        avi.smoothToShow();
+        startdialog.show();
+
+    }
